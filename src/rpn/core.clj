@@ -20,13 +20,13 @@
   "Helper function to apply an operator to 2 numbers."
   [a b c]
   (if (= a "+")
-    (+ b c)
+    (+ c b)
     (if (= a "-")
-      (- b c)
+      (- c b)
       (if (= a "*")
-        (* b c)
+        (* c b)
         (if (= a "/")
-          (/ b c)
+          (/ c b)
           (throw (Exception. (str "Unkown operator '" a "'"))))))))
 
 (defn- parse-tokens
