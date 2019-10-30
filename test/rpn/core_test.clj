@@ -27,4 +27,6 @@
     (is (thrown? Exception (calc "12+*")))
     (is (thrown? Exception (calc "+ 1 2")))
     (is (thrown? Exception (calc "2 + +")))
+    (is (thrown? Exception (calc "2 1 .")))
+    (is (thrown? Exception (calc "+")))
     (is (thrown? Exception (calc "2 2 2")))))
