@@ -7,4 +7,5 @@
                  [org.clojure/tools.logging "0.5.0"]]
   :main ^:skip-aot rpn.core
   :target-path "target/%s"
+  :plugins [[lein-cloverage "1.1.2"]]
   :profiles {:uberjar {:aot :all}})
