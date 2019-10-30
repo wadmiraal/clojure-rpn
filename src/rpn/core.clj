@@ -1,19 +1,21 @@
 (ns rpn.core
   (:require [clojure.string :as str])
-  (:use [clojure.tools.logging :as log])
   (:gen-class))
 
-(defn- is-op [x]
+(defn- is-op
   "Helper function to verify the token is a valid operator."
+  [x]
   (re-matches #"^(\+|-|\*|/)$" x))
 
-(defn- is-num [x]
+(defn- is-num
   "Helper function to verify the token is a valid number.
   Negative and floating point numbers are allowed."
+  [x]
   (re-matches #"^-?\d+(\.\d+)?" x))
 
-(defn- crash [err exp]
+(defn- crash
   "Helper function to kill the program."
+  [err exp]
   (throw (Exception. (str err " Expression '" exp "' is not parsable."))))
 
 (defn- apply-op
@@ -47,32 +49,21 @@
   Take a list of tokens, and reduce it to -- hopefully -- a single Float. If the
   result is a list containing anything else than a single Float, the computation
   has failed, and the expression wasn't computable."
-  [list]
+  [list exp]
   (if (>= (count list) 3)
     (let [[a b c & rest] list]
-      (log/debug "...treat args " a ", " b ", and " c)
       (if (and (string? a) (number? b) (number? c))
-        (do
-          (log/debug "-> We can compute " b a c)
-          (let [result (apply-op a b c)
-                return (conj rest result)]
-            (log/debug "Result of '" b a c "' = " result)
-            (log/debug "Return with rest:" return)
-            return))
-        (if (and (string? a) (string? c))
-          (do
-            (log/debug "-> We cannot compute " b a c ", recurse at C:" c)
-            (let [result (compute (conj rest c))]
-              (recur (concat [a b] result))))
-          (if (and (string? a) (string? b))
-            (do
-              (log/debug "-> We cannot compute " b a c ", recurse at B: " b)
-              (let [result (compute (concat [b c] rest))]
-                (recur (conj result a))))))))
-
-    (do
-      (log/debug "List is no longer treatable, return as-is")
-      list)))
+        (let [result (apply-op a b c)
+              return (conj rest result)]
+          return)
+        (if (and (string? a) (string? c) (>= (count rest) 2))
+          (let [result (compute (conj rest c) exp)]
+            (recur (concat [a b] result) exp))
+          (if (and (string? a) (string? b) (>= (count rest) 1))
+            (let [result (compute (concat [b c] rest) exp)]
+              (recur (conj result a) exp))
+            (crash (str "We don't know how to handle the remaining stack:" a ", " b ", " c) exp)))))
+    list))
 
 (defn calc
   "Interpet a Reverse Polish Notation mathematical expression.
@@ -85,7 +76,7 @@
   Example: '1 2 3 + /' = (/ (+ 3 2) 1) = 5"
   [exp]
   (let [list (parse-tokens exp)
-        result (compute (reverse list))]
+        result (compute (reverse list) exp)]
     (if (= (count result) 1)
       (let [n (first result)]
         (if (number? n)
